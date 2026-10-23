@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ты попался</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #111;
+            color: white;
+            font-family: sans-serif;
+            margin: 0;
+            text-align: center;
+        }
+        button {
+            padding: 20px 40px;
+            font-size: 20px;
+            cursor: pointer;
+            background: #ff0055;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #ff3377;
+        }
+        #ip {
+            font-size: 18px;
+            color: #00ffcc;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ты попался</h1>
+    <p id="ip">Твой IP: загрузка...</p>
+    <button id="startBtn">Нажми, чтобы услышать</button>
+
+    <script>
+        // Получаем IP друга (он увидит свой)
+        fetch('https://api.ipify.org?format=json')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('ip').innerText = 'Твой IP: ' + data.ip;
+            })
+            .catch(() => {
+                document.getElementById('ip').innerText = 'IP скрыт';
+            });
+
+        // Звук (браузеры не дают автозвук без клика)
+        document.getElementById('startBtn').addEventListener('click', () => {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Первый звук — резкий
+            const osc1 = audioCtx.createOscillator();
+            const gain1 = audioCtx.createGain();
+            osc1.type = 'sawtooth';
+            osc1.frequency.setValueAtTime(1200, audioCtx.currentTime);
+            osc1.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 1.5);
+            gain1.gain.setValueAtTime(1, audioCtx.currentTime);
+            gain1.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+            osc1.connect(gain1);
+            gain1.connect(audioCtx.destination);
+            osc1.start();
+            osc1.stop(audioCtx.currentTime + 1.5);
+
+            // Второй звук — через 0.5 сек
+            setTimeout(() => {
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                osc2.type = 'square';
+                osc2.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc2.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 1);
+                gain2.gain.setValueAtTime(1, audioCtx.currentTime);
+                gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1);
+                osc2.connect(gain2);
+                gain2.connect(audioCtx.destination);
+                osc2.start();
+                osc2.stop(audioCtx.currentTime + 1);
+            }, 500);
+        });
+    </script>
+</body>
+</html>
